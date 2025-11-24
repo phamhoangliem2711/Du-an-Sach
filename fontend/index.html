@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Frontend - Bán sách</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 24px auto; }
+    input, button { padding: 8px; margin: 4px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background: #f3f3f3; }
+  </style>
+</head>
+<body>
+
+<h1>Shop sách - Frontend</h1>
+
+<p>Giao diện frontend đơn giản. Để hoạt động, hãy chạy server PHP ở root của project (xem README).</p>
+
+<section>
+  <h2>Thêm sách</h2>
+  <form id="addForm">
+    <label>Tiêu đề<br><input type="text" name="title" required></label><br>
+    <label>Tác giả<br><input type="text" name="author" required></label><br>
+    <label>Giá (VNĐ)<br><input type="number" step="0.01" name="price" required></label><br>
+    <label>Số lượng<br><input type="number" name="stock" required></label><br>
+    <button type="submit">Thêm</button>
+  </form>
+</section>
+
+<section>
+  <h2>Danh sách sách</h2>
+  <div id="error" style="color:crimson; white-space:pre-wrap;"></div>
+  <div id="listContainer">Đang tải...</div>
+</section>
+
+<script>
+// Use a relative path so the frontend works when the project is served under
+// a subpath (e.g. http://localhost/TH_MNM/fontend/index.html).
+// If you run PHP built-in server at project root, change to '/backend/chucnang.php'.
+const apiBase = '../backend/chucnang.php';
+async function fetchList(){
+  document.getElementById('error').textContent = '';
+  document.getElementById('listContainer').textContent = 'Đang tải...';
+    try {
+      const res = await fetch(apiBase + '?format=json', {cache: 'no-store'});
+      const text = await res.text();
+      try {
+        const list = JSON.parse(text);
+        renderList(list);
+      } catch (err) {
+        // show helpful debug information when server returns HTML (causes SyntaxError)
+        const preview = text.slice(0, 1000);
+        const attempted = res.url || (apiBase + '?format=json');
+        document.getElementById('error').textContent = 'Lỗi khi tải dữ liệu: ' + err.message + "\nRequested URL: " + attempted + '\nServer trả:\n' + preview;
+        document.getElementById('listContainer').textContent = 'Không thể tải danh sách.';
+      }
+    } catch (err) {
+      document.getElementById('error').textContent = 'Lỗi mạng: ' + err.message;
+      document.getElementById('listContainer').textContent = 'Không thể tải danh sách.';
+    }
+}
+
+function renderList(list){
+  if(!list || !list.length){
+    document.getElementById('listContainer').innerText = 'Chưa có sách.';
+    return;
+  }
+  let html = '<table><tr><th>ID</th><th>Tiêu đề</th><th>Tác giả</th><th>Giá</th><th>Số lượng</th></tr>';
+  for(const b of list){
+    html += `<tr><td>${b.id}</td><td>${escapeHtml(b.title)}</td><td>${escapeHtml(b.author)}</td><td>${Number(b.price).toFixed(2)}</td><td>${b.stock}</td></tr>`;
+  }
+  html += '</table>';
+  document.getElementById('listContainer').innerHTML = html;
+}
+
+function escapeHtml(str){
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+document.getElementById('addForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  fd.append('add','1');
+  try {
+    // send as form data so backend receives it like a normal form submit
+    await fetch(apiBase, { method: 'POST', body: fd });
+    e.target.reset();
+    await fetchList();
+  } catch (err) {
+    document.getElementById('error').textContent = 'Gửi dữ liệu thất bại: ' + err.message;
+  }
+});
+
+// initial load
+fetchList();
+</script>
+
+</body>
+</html>
