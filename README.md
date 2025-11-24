@@ -40,3 +40,4 @@ An toàn & phát triển:
 - Các prepared statements đã được dùng cho các thao tác INSERT/UPDATE/DELETE.
 - Không dùng authentication trong bản mẫu này — thêm auth trước khi đưa lên môi trường công khai.
 # Project
+# Sach
