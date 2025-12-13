@@ -1,0 +1,11 @@
+# Đặt trong /var/www/html/.htaccess
+Options +FollowSymLinks -Indexes
+RewriteEngine On
+
+# Chuyển hướng tất cả request đến frontend/index.html
+RewriteCond %{REQUEST_URI} !^/backend/
+RewriteCond %{REQUEST_URI} !^/frontend/
+RewriteRule ^(.*)$ frontend/index.html [L,QSA]
+
+# Cho phép truy cập file PHP trong backend
+RewriteRule ^backend/ - [L]
