@@ -2,17 +2,88 @@
 // InfinityFree database config
 $host = "sql310.infinityfree.com"; // Host trong CPanel
 $username = "if0_40677219"; // Username database
-$password = "Hoangliem123"; // Password database
+$password = "Hoangliem27112004"; // Password database
 $dbname = "if0_40677219_sach_db"; // Database name
 
 $conn = new mysqli($host, $username, $password, $dbname);
+// Xử lý API
+$action = $_GET['action'] ?? '';
+
+switch($action) {
+    case 'list':
+        getBooks($conn);
+        break;
+    case 'add':
+        addBook($conn);
+        break;
+    // ... các action khác
+}
+function getBooks($conn) {
+    $sql = "SELECT * FROM sach ORDER BY id DESC";
+    $result = $conn->query($sql);
+    $books = [];
+    while($row = $result->fetch_assoc()) {
+        $books[] = $row;
+    }
+    echo json_encode($books);
+}
 ?>
+
 <?php
+
+
 // ======================
 // DỮ LIỆU ẢO (KHÔNG CẦN DATABASE)
 // Lưu trong session để tồn tại tạm thời trong một phiên duyệt
 // ======================
 session_start();
+
+// THÊM NGAY SAU session_start();
+header("Access-Control-Allow-Origin: https://bansach1.netlify.app");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+
+session_start();
+
+// ========== PHẦN API MỚI CHO FRONTEND ==========
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
+    $action = $_GET['action'];
+    
+    if ($action === 'addBook') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        
+        $title = $data['title'] ?? '';
+        $author = $data['author'] ?? '';
+        $price = $data['price'] ?? 0;
+        $stock = $data['stock'] ?? 0;
+        
+        // Tạo ID mới
+        $ids = array_keys($_SESSION['books']);
+        $newId = $ids ? (max($ids) + 1) : 1;
+        
+        $_SESSION['books'][$newId] = [
+            'id' => $newId,
+            'title' => $title,
+            'author' => $author,
+            'price' => $price,
+            'stock' => $stock,
+        ];
+        
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'id' => $newId]);
+        exit;
+    }
+    
+    if ($action === 'getBooks') {
+        header('Content-Type: application/json');
+        echo json_encode(array_values($_SESSION['books']));
+        exit;
+    }
+}
+
+// ========== PHẦN HIỂN THỊ HTML CŨ ==========
+// ... phần HTML hiện tại của bạn
+
 
 if (!isset($_SESSION['books'])) {
     // Sample fake data
@@ -22,6 +93,7 @@ if (!isset($_SESSION['books'])) {
         3 => ['id' => 3, 'title' => 'Đắc Nhân Tâm', 'author' => 'Dale Carnegie', 'price' => 90000.00, 'stock' => 7],
     ];
 }
+
 
 // API: trả JSON khi yêu cầu
 if (isset($_GET['format']) && $_GET['format'] === 'json') {
