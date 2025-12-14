@@ -1,0 +1,8 @@
+﻿[build]
+  publish = "frontend"
+  # Không có command vì HTML thuần
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
