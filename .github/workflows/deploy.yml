@@ -1,22 +1,38 @@
-﻿name: "Deploy to InfinityFree"
+﻿name: Deploy Full Stack
 
 on:
   push:
-    branches: ["main"]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
-  deploy:
-    runs-on: "ubuntu-latest"
+  deploy-frontend:
+    runs-on: ubuntu-latest
     steps:
-      - name: "Checkout code"
-        uses: "actions/checkout@v4"
+      - uses: actions/checkout@v4
       
-      - name: "Deploy Backend via FTP"
-        uses: "SamKirkland/FTP-Deploy-Action@v4.3.4"
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v2
         with:
-          server: "ftpupload.net"
-          username: "${{ secrets.IF0_40677219 }}"
-          password: "${{ secrets.FTP_PASSWORD }}"
-          local-dir: "./backend/"
-          server-dir: "./htdocs/"
+          publish-dir: './frontend'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NFP_MV4X5DAVBJUEMCPEGOKKEMTANHSEDBJ8E5E2 }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          
+  deploy-backend:
+    runs-on: ubuntu-latest
+    needs: deploy-frontend
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy backend files via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ftpupload.net
+          username: ${{ secrets.IF0_40677219 }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./backend/
+          server-dir: ./htdocs/
