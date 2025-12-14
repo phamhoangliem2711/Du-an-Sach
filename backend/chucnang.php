@@ -6,18 +6,7 @@ $password = "Hoangliem27112004"; // Password database
 $dbname = "if0_40677219_sach_db"; // Database name
 
 $conn = new mysqli($host, $username, $password, $dbname);
-// Xử lý API
-$action = $_GET['action'] ?? '';
 
-switch($action) {
-    case 'list':
-        getBooks($conn);
-        break;
-    case 'add':
-        addBook($conn);
-        break;
-    // ... các action khác
-}
 function getBooks($conn) {
     $sql = "SELECT * FROM sach ORDER BY id DESC";
     $result = $conn->query($sql);

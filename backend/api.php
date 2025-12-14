@@ -1,41 +1,87 @@
 ﻿<?php
-header("Access-Control-Allow-Origin: *");
+// backend/api.php - API riêng cho frontend
+header("Access-Control-Allow-Origin: https://bansach1.netlify.app");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
-session_start();
 
-if (!isset($_SESSION['books'])) {
-    $_SESSION['books'] = [
-        1 => ['id'=>1, 'title'=>'Những người khốn khổ', 'author'=>'Victor Hugo', 'price'=>120000, 'stock'=>5],
-        2 => ['id'=>2, 'title'=>'Sapiens', 'author'=>'Yuval Noah Harari', 'price'=>150000, 'stock'=>10],
-        3 => ['id'=>3, 'title'=>'Đắc Nhân Tâm', 'author'=>'Dale Carnegie', 'price'=>90000, 'stock'=>7],
-    ];
-}
+// InfinityFree database config
+$host = "sql310.infinityfree.com";
+$username = "if0_40677219";
+$password = "Hoangliem27112004";
+$dbname = "if0_40677219_sach_db";
 
-$action = $_GET['action'] ?? '';
-$method = $_SERVER['REQUEST_METHOD'];
-
-if ($method === 'GET' && $action === 'getBooks') {
-    echo json_encode(array_values($_SESSION['books']));
+$conn = new mysqli($host, $username, $password, $dbname);
+if($conn->connect_error) {
+    echo json_encode(['error' => 'Database connection failed: ' . $conn->connect_error]);
     exit;
 }
 
-if ($method === 'POST' && $action === 'addBook') {
+// Xử lý action
+$action = $_GET['action'] ?? '';
+
+switch($action) {
+    case 'list':
+        getBooks($conn);
+        break;
+    case 'add':
+        addBook($conn);
+        break;
+    default:
+        echo json_encode(['error' => 'Invalid action']);
+}
+
+// ========== HÀM GET BOOKS ==========
+function getBooks($conn) {
+    $sql = "SELECT * FROM sach ORDER BY id DESC";
+    $result = $conn->query($sql);
+    
+    if(!$result) {
+        echo json_encode(['error' => 'Query failed: ' . $conn->error]);
+        return;
+    }
+    
+    $books = [];
+    while($row = $result->fetch_assoc()) {
+        $books[] = $row;
+    }
+    echo json_encode($books);
+}
+
+// ========== HÀM ADD BOOK ==========
+function addBook($conn) {
+    // Nhận dữ liệu JSON từ frontend
     $input = json_decode(file_get_contents('php://input'), true);
     
-    $ids = array_keys($_SESSION['books']);
-    $newId = $ids ? (max($ids) + 1) : 1;
+    if(!$input) {
+        echo json_encode(['success' => false, 'message' => 'Invalid JSON data']);
+        return;
+    }
     
-    $_SESSION['books'][$newId] = [
-        'id' => $newId,
-        'title' => $input['title'] ?? '',
-        'author' => $input['author'] ?? '',
-        'price' => floatval($input['price'] ?? 0),
-        'stock' => intval($input['stock'] ?? 0),
-    ];
+    $title = $conn->real_escape_string($input['title'] ?? '');
+    $author = $conn->real_escape_string($input['author'] ?? '');
+    $price = floatval($input['price'] ?? 0);
+    $quantity = intval($input['quantity'] ?? $input['stock'] ?? 0);
     
-    echo json_encode({success: true, id: $newId});
-    exit;
+    // Kiểm tra dữ liệu
+    if(empty($title) || empty($author)) {
+        echo json_encode(['success' => false, 'message' => 'Tiêu đề và tác giả không được để trống']);
+        return;
+    }
+    
+    // Thực hiện INSERT
+    $sql = "INSERT INTO sach (title, author, price, quantity) VALUES ('$title', '$author', $price, $quantity)";
+    
+    if($conn->query($sql)) {
+        echo json_encode([
+            'success' => true, 
+            'message' => 'Thêm sách thành công',
+            'id' => $conn->insert_id
+        ]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Lỗi database: ' . $conn->error]);
+    }
 }
 
-echo json_encode({error: 'Invalid request'});
+$conn->close();
 ?>
