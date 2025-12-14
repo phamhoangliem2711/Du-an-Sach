@@ -1,4 +1,13 @@
 <?php
+// InfinityFree database config
+$host = "sql310.infinityfree.com"; // Host trong CPanel
+$username = "if0_40677219"; // Username database
+$password = "Hoangliem123"; // Password database
+$dbname = "if0_40677219_sach_db"; // Database name
+
+$conn = new mysqli($host, $username, $password, $dbname);
+?>
+<?php
 // ======================
 // DỮ LIỆU ẢO (KHÔNG CẦN DATABASE)
 // Lưu trong session để tồn tại tạm thời trong một phiên duyệt
