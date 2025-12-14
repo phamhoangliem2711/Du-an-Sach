@@ -1,0 +1,8 @@
+﻿name: Quick Test
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "GitHub Actions is working!"
+      - run: echo "If you see this, CI/CD setup is correct."
